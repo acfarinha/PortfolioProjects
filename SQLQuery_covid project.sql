@@ -142,25 +142,14 @@ FROM #PopulationTotalVaccination
 --CREATING VIEWS FOR VISUALIZATION ON TABLEAU
 
 
+-- 1 GLOBAL NUMBERS
 
-CREATE VIEW COVID_Death_perc as
-SELECT location, date, total_cases, total_deaths, (total_deaths/ total_cases)*100 AS death_percent
-FROM PortfolioProject..covid_deaths
---WHERE location like '%Portugal%'
---ORDER BY 1,2
---GROUP BY location
-
-CREATE VIEW InfectionRates as
-SELECT location, MAX(total_cases/population *100) as highest_infection_rate
-FROM PortfolioProject..covid_deaths
-WHERE population IS NOT NULL AND total_cases IS NOT NULL
-GROUP BY location
-
-CREATE VIEW DeathRates as
-SELECT location, MAX(CAST(total_deaths as int)) as death_counts, MAX(total_deaths/population *100) as Total_deaths_perct
+CREATE VIEW WorldlCovid as
+SELECT SUM(new_cases) as world_new_cases, SUM(CAST(new_deaths as int)) as world_Total_deaths, SUM(CAST(new_deaths as int)) /SUM(new_cases) *100 as world_death_perc
 FROM PortfolioProject..covid_deaths
 WHERE population IS NOT NULL AND total_cases IS NOT NULL AND continent IS NOT NULL
-GROUP BY location 
+
+-- 2 DEATHS BY CONTINENT
 
 CREATE VIEW CovidDeathperContinent as
 SELECT continent, MAX(CAST(total_deaths as int)) as death_counts, MAX(total_deaths/population *100) as Total_deaths_perct
@@ -168,17 +157,44 @@ FROM PortfolioProject..covid_deaths
 WHERE population IS NOT NULL AND total_cases IS NOT NULL AND continent IS NOT NULL
 GROUP BY continent
 
+-- 3   COVID INFECTION RATES
+
+CREATE VIEW InfectionRates as
+SELECT location, MAX(total_cases) as highest_number_cases, MAX(total_cases/population *100) as highest_infection_rate
+FROM PortfolioProject..covid_deaths
+WHERE population IS NOT NULL AND total_cases IS NOT NULL
+GROUP BY location
+
+
+-- 4  WORLD covid over time
+
+SELECT location, population, date, MAX(total_cases) as highest_number_cases, MAX(total_cases/population *100) as PercPopInfected
+FROM PortfolioProject..covid_deaths
+WHERE population IS NOT NULL AND total_cases IS NOT NULL AND continent IS NOT NULL
+GROUP BY location, population, date
+ORDER BY PercPopInfected desc
+
+
+-- 5  COVID WORLD DEATHS per COUNTRY
+
+CREATE VIEW DeathRates as
+SELECT location, MAX(CAST(total_deaths as int)) as death_counts, MAX(total_deaths/population *100) as Total_deaths_perct
+FROM PortfolioProject..covid_deaths
+WHERE population IS NOT NULL AND total_cases IS NOT NULL AND continent IS NOT NULL
+GROUP BY location 
+
+
+-- 6 COVID Deaths over Time
+
+
 CREATE VIEW WorldDeathsOverTime as
 SELECT date, SUM(new_cases) as world_new_cases, SUM(CAST(new_deaths as int)) as world_Total_deaths, SUM(CAST(new_deaths as int)) /SUM(new_cases) *100 as world_death_perc
 FROM PortfolioProject..covid_deaths
 WHERE population IS NOT NULL AND total_cases IS NOT NULL AND continent IS NOT NULL
 GROUP BY date
 
-CREATE VIEW WorldlCovid as
-SELECT SUM(new_cases) as world_new_cases, SUM(CAST(new_deaths as int)) as world_Total_deaths, SUM(CAST(new_deaths as int)) /SUM(new_cases) *100 as world_death_perc
-FROM PortfolioProject..covid_deaths
-WHERE population IS NOT NULL AND total_cases IS NOT NULL AND continent IS NOT NULL
 
+-- 7  COVID World Vaccination
 
 CREATE VIEW WorldPopVaccination as
 WITH PopvsVac(continent, location, population, new_vaccinations, people_vaccinated, accumulated_vacination)
